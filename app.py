@@ -29,23 +29,16 @@ while True:
     
 
     results = model(frame)  # list of Results objects
-
     for result in results:
-        boxes = result.boxes.xywh# Boxes object for bounding box outputs
-    boxes = boxes.tolist()
-    print(boxes)
+        for box in result.boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            conf = box.conf[0].item()
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
+            cv2.putText(frame, "mat lon", (x1, y1 - 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-    for (x, y, w, h) in faces:
-        face_roi = rgb_frame[y:y + h, x:x + w]  # Lấy vùng khuôn mặt
-        
-        output = query(face_roi)  
-        emotion = max(output, key=lambda x: x['score'])['label']
-
-        # Vẽ khung và hiển thị cảm xúc
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
-        cv2.putText(frame, emotion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-
-    cv2.imshow('Camera Feed', frame)
+    # Hiển thị frame
+    cv2.imshow("YOLOv8 Face Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
