@@ -1,0 +1,11 @@
+Dựa trên dữ liệu đã thu thập, ta có thể thấy:
+
+1. Trạng thái cảm xúc phổ biến nhất của học sinh là "neutral" với tỷ lệ rất cao. Điều này cho thấy học sinh không có cảm xúc mạnh mẽ trong suốt buổi học.
+
+2. Cảm xúc của học sinh có sự thay đổi trong suốt buổi học. Tuy nhiên, không có dữ liệu cụ thể về thời gian nên không thể so sánh cảm xúc giữa các thời điểm khác nhau.
+
+3. Xu hướng cảm xúc chủ yếu là trung lập, với một số trường hợp cảm xúc tiêu cực ("angry") và tích cực ("happy"). Tuy nhiên, tỷ lệ cảm xúc trung lập chiếm đa số, cho thấy buổi học không tạo ra nhiều ấn tượng mạnh với học sinh.
+
+4. Mức độ thu hút của buổi học có thể đánh giá là trung bình. Học sinh không thể hiện sự hứng thú hoặc chán chường rõ rệt.
+
+5. Để tăng mức độ hứng thú của học sinh, giáo viên có thể thay đổi phương pháp giảng dạy, tạo thêm các hoạt động tương tác, thảo luận nhóm, hoặc sử dụng các công cụ học tập trực quan hơn.
