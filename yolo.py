@@ -1,60 +1,38 @@
-import requests
-import os
 import cv2
-import asyncio
-import aiohttp
-from ultralytics import YOLO
+from fer import FER
+from moviepy import *
+# Initialize the emotion detector
+detector = FER()
 
-# Load YOLO model
-model = YOLO("assets/yolov11n-face.pt")
+# Start video capture from the webcam
+cap = cv2.VideoCapture(0)
 
-# Hugging Face API
-HUGGINGFACE = os.getenv("HUGGINGFACE")
-API_URL = "https://api-inference.huggingface.co/models/dima806/facial_emotions_image_detection"
-HEADERS = {"Authorization": f"Bearer {HUGGINGFACE}"}
+while True:
+    # Capture frame-by-frame
+    ret, frame = cap.read()
+    
+    # Use the FER library to detect emotions
+    emotions = detector.detect_emotions(frame)
 
-async def query_async(session, face_img):
-    """Gửi ảnh khuôn mặt lên Hugging Face API bằng asyncio + aiohttp."""
-    _, img_encoded = cv2.imencode(".jpg", face_img)
-    async with session.post(API_URL, headers=HEADERS, data=img_encoded.tobytes()) as response:
-        return await response.json()
+    # Draw rectangles and labels for each detected face and their emotions
+    for emotion in emotions:
+        (x, y, w, h) = emotion["box"]
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        
+        # Get the dominant emotion
+        dominant_emotion = emotion["emotions"]
+        emotion_name = max(dominant_emotion, key=dominant_emotion.get)
+        
+        # Display the emotion name
+        cv2.putText(frame, emotion_name, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-async def process_frame(frame):
-    """Phát hiện khuôn mặt và gửi API song song."""
-    results = model(frame)
-    tasks = []
-    faces = []
+    # Display the resulting frame
+    cv2.imshow('Emotion Detection', frame)
 
-    async with aiohttp.ClientSession() as session:
-        for result in results:
-            for box in result.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                face = frame[y1:y2, x1:x2]  # Cắt ảnh khuôn mặt
+    # Break the loop if 'q' is pressed
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-                if face.size == 0:  # Kiểm tra nếu không có khuôn mặt hợp lệ
-                    continue
-
-                faces.append((x1, y1, x2, y2))  # Lưu bounding box
-                tasks.append(query_async(session, face))  # Tạo task gửi API
-
-        responses = await asyncio.gather(*tasks)  # Chạy các request API song song
-    print(responses)
-    for (x1, y1, x2, y2), output in zip(faces, responses):
-        if isinstance(output, list) and len(output) > 0:  # Đảm bảo API trả về kết quả hợp lệ
-            best_emotion = max(output, key=lambda x: x['score'])
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, best_emotion['label'], (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-    return frame
-
-def main():
-    frame = cv2.imread("statics/1000_F_506751155_fJ5Ko5T0wsTH7Q9VNwEgo6J81da8arlD.jpg")
-    processed_frame = asyncio.run(process_frame(frame))  # Gọi async function
-
-    cv2.imshow("Detected Faces", processed_frame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    main()
+# Release the capture and close any open windows
+cap.release()
+cv2.destroyAllWindows()
