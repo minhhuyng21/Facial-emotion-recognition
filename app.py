@@ -7,7 +7,7 @@ from ultralytics import YOLO
 import asyncio
 import aiohttp
 import json
-
+import time
 
 # Load a pretrained YOLO11n model
 model = YOLO("assets/yolov11n-face.pt")
@@ -39,9 +39,11 @@ async def process_frame(frame):
 
                 faces.append((x1, y1, x2, y2))  # Lưu bounding box
                 tasks.append(query_async(session, face))  # Tạo task gửi API
-
+        start_time = time.time()
         responses = await asyncio.gather(*tasks)  # Chạy các request API song song
-    
+        end_time = time.time()
+        processing_time = end_time - start_time
+        print(f"Thời gian xử lý: {processing_time:.4f} giây")
     print("API Response:", responses)  # In ra dữ liệu trả về để kiểm tra
 
 
