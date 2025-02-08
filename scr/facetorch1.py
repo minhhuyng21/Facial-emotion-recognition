@@ -3,17 +3,33 @@ from omegaconf import OmegaConf
 import torch
 import time
 import cv2
-
-path_img_input="statics\\1000_F_506751155_fJ5Ko5T0wsTH7Q9VNwEgo6J81da8arlD.jpg"
+import json
+path_img_input="D:\AI\Facial-emotion-recognition\config.yml"
 path_img_output="test_output.jpg"
 path_config="config.yml"
 
 
 cfg = OmegaConf.load(path_config)
 analyzer = FaceAnalyzer(cfg.analyzer)
-
+emotion_responses = [] 
 cap = cv2.VideoCapture(0)
 
+
+
+def save_emotions():
+    """Lưu các cảm xúc có score > 0.7 vào list"""
+
+    print("****************************************")
+    filtered_emotions = []
+    
+    for response in emotion_responses:
+        for emotion in response:
+            if emotion['score'] > 0.7:  # Chỉ chọn những cảm xúc có score > 0.7
+                filtered_emotions.append(emotion)
+    
+    # Lưu vào tệp JSON sau khi hoàn tất (nếu cần)
+    with open('emotions.json', 'w') as json_file:
+        json.dump(filtered_emotions, json_file, indent=4)
 # Check if the webcam is opened correctly
 if not cap.isOpened():
     print("Error: Could not open webcam.")
@@ -32,8 +48,6 @@ while True:
     frame_tensor = frame_tensor.to(torch.uint8)  # Đảm bảo kiểu dữ liệu uint8
 
 
-    start_time = time.time()
-    analyzer
     response = analyzer.run(
         image_source=frame_tensor,
         batch_size=8,
@@ -42,11 +56,6 @@ while True:
         include_tensors=False,
         path_output=None  # No output file needed
     )
-    end_time = time.time()
-    processing_time = end_time - start_time
-    print(f"Thời gian xử lý: {processing_time:.4f} giây")
-    # Draw bounding boxes and emotion labels on the frame
-    start_time = time.time()
     for face in response.faces:
         x1, y1, x2, y2 = face.loc.x1, face.loc.y1, face.loc.x2, face.loc.y2
         emotion = face.preds["fer"].label
@@ -60,9 +69,6 @@ while True:
 
     # Display the real-time frame with detected emotions
     cv2.imshow("Real-Time Emotion Detection", frame)
-    end_time = time.time()
-    processing_time = end_time - start_time
-    print(f"Thời gian xử lý: {processing_time:.4f} giây")
     # Press 'q' to quit
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
