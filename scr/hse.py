@@ -5,8 +5,9 @@ import torch
 from hsemotion.facial_emotions import HSEmotionRecognizer
 from facenet_pytorch import MTCNN
 import json
-
-
+from data_draw import draw_diagram
+from autogen_agent import expert_debate
+import pandas as pd
 # Kiểm tra GPU
 use_cuda = torch.cuda.is_available()
 device = 'cuda' if use_cuda else 'cpu'
@@ -14,7 +15,22 @@ emotion_responses = []
 # Khởi tạo mô hình phát hiện khuôn mặt
 mtcnn = MTCNN(keep_all=False, post_process=False, min_face_size=40, device=device)
 
+def data_analyze(emotion_respose):
+    df = pd.DataFrame([{'emotion': item['emotion']} for item in emotion_responses])
 
+    # Đếm số lượng của mỗi emotion
+    emotion_counts = df['emotion'].value_counts()
+
+    scores_df = pd.DataFrame([item['score'] for item in emotion_responses])
+    scores_df.columns = [f'Score_{i+1}' for i in range(8)]
+    scores_df['Emotion'] = [item['emotion'] for item in emotion_responses]
+
+    # Tính trung bình score cho mỗi emotion
+    avg_scores = scores_df.groupby('Emotion')[scores_df.columns[:-1]].mean()
+
+    return emotion_counts, avg_scores
+
+ 
 def softmax(x):
     exp_x = np.exp(x - np.max(x))  # Tránh tràn số
     return exp_x / np.sum(exp_x)
@@ -87,5 +103,8 @@ while True:
 # Giải phóng tài nguyên
 cap.release()
 cv2.destroyAllWindows()
-print(emotion_responses)
-save_emotions()
+
+
+# draw_diagram(emotion_responses)
+count, score = data_analyze(emotion_responses)
+expert_debate([count,score])

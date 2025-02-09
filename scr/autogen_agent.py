@@ -51,7 +51,7 @@ def expert_debate(emotion_data):
             "Discuss among yourselves and produce a final consensus report on student engagement and emotional well-being during the class. "
             "The report should focus on qualitative insights rather than including too many numerical details. "
             "Once consensus is reached, clearly state 'FINAL ANSWER:' followed by the consensus report. "
-            "Finally, please provide the above final answer translated into Vietnamese."
+            "Finally, please provide the above final answer translated into Vietnamese ."
         )
     )
 
@@ -64,14 +64,12 @@ def expert_debate(emotion_data):
         print(f"{sender}: {content}\n")
         
         # Kiểm tra xem có thông báo kết luận hay không
-        if "TRẢ LỜI CUỐI CÙNG:" in content:
-            final_answer = content.split("TRẢ LỜI CUỐI CÙNG:")[-1].strip()
+        if "Vietnamese Translation:" in content:
+            final_answer = content.split("Vietnamese Translation:")[-1].strip()
 
     # In ra kết quả cuối cùng nếu có
 
     return final_answer
-
-
 def main():
     with open("emotions.json", "r", encoding="utf-8") as f:
         data = json.load(f)
