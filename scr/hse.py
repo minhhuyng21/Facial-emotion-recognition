@@ -105,6 +105,6 @@ cap.release()
 cv2.destroyAllWindows()
 
 
-# draw_diagram(emotion_responses)
+draw_diagram(emotion_responses,"emotion.pdf")
 count, score = data_analyze(emotion_responses)
-expert_debate([count,score])
+expert_debate([count,score],"emotion.pdf")

@@ -2,22 +2,51 @@ import os
 from autogen import AssistantAgent,ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
 from dotenv import load_dotenv
 import json
+from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.pyplot as plt
+from PyPDF2 import PdfReader, PdfWriter
+from matplotlib.backends.backend_pdf import PdfPages
+
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI')
 config = {"config_list": [{"model": "gpt-4", "api_key": OPENAI_API_KEY}]}
+def add_text_to_pdf(input_pdf, text):
+    # Đọc file PDF gốc
+    reader = PdfReader(input_pdf)
+    writer = PdfWriter()
+
+    # Sao chép các trang cũ vào writer
+    for page in reader.pages:
+        writer.add_page(page)
+
+    # Tạo trang mới chứa nội dung văn bản
+    with PdfPages("temp.pdf") as pdf:
+        fig, ax = plt.subplots(figsize=(8.5, 11))
+        ax.axis('off')
+        ax.text(0.5, 0.5, text, fontsize=14, ha='center', va='center', wrap=True)
+        pdf.savefig(fig)
+        plt.close(fig)
+
+    # Đọc trang mới và thêm vào PDF gốc
+    new_reader = PdfReader("temp.pdf")
+    writer.add_page(new_reader.pages[0])
+
+    # Ghi đè lên file PDF gốc
+    with open(input_pdf, "wb") as f:
+        writer.write(f)
 
 
 
 data_analyst_agent = ConversableAgent(
     name="Data_Analyst_Agent",
-    system_message="You are a professional data analyst specialized in interpreting emotional data from students.",
+    system_message="You are a professional data analyst specialized in interpreting emotional data from students. Give results to see if students are interested in the lesson",
     llm_config=config,
 )
 
 # Agent nhà tâm lý học
 psychologist_agent = ConversableAgent(
     name="Psychologist_Agent",
-    system_message="You are a psychologist specialized in analyzing student emotions and providing insights into their engagement levels during classes.",
+    system_message="You are a psychologist specialized in analyzing student emotions and providing insights into their engagement levels during classes. Give results to see if students are interested in the lesson",
     llm_config=config,
 )
 
@@ -32,7 +61,7 @@ user_agent = ConversableAgent(
     system_message="You are a user interested in analyzing student emotion data.",
     llm_config=config,
 )
-def expert_debate(emotion_data):
+def expert_debate(emotion_data, existing_pdf):
     # Tạo group chat gồm các agent: chuyên gia phân tích dữ liệu, nhà tâm lý học và moderator
     groupchat = GroupChat(
         agents=[data_analyst_agent, psychologist_agent, moderator],
@@ -66,9 +95,13 @@ def expert_debate(emotion_data):
         # Kiểm tra xem có thông báo kết luận hay không
         if "Vietnamese Translation:" in content:
             final_answer = content.split("Vietnamese Translation:")[-1].strip()
+        if "VIETNAMESE TRANSLATION:" in content:
+            final_answer = content.split("VIETNAMESE TRANSLATION:")[-1].strip()
 
     # In ra kết quả cuối cùng nếu có
 
+
+    add_text_to_pdf(existing_pdf, final_answer)
     return final_answer
 def main():
     with open("emotions.json", "r", encoding="utf-8") as f:
