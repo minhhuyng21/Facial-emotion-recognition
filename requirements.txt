@@ -1,0 +1,12 @@
+hsemotion
+seaborn
+matplotlib
+pandas
+numpy
+opencv-python
+autogen
+python-dotenv
+PyPDF2
+torch
+facenet_pytorch
+streamlit
