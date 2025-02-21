@@ -10,3 +10,6 @@ PyPDF2
 torch
 facenet_pytorch
 streamlit
+hsemotion-onnx
+tensorflow
+tf2onnx
