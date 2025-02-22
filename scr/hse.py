@@ -8,6 +8,7 @@ import json
 from data_draw import draw_diagram
 from autogen_agent import expert_debate
 import pandas as pd
+import time
 # Kiểm tra GPU
 use_cuda = torch.cuda.is_available()
 device = 'cuda' if use_cuda else 'cpu'
@@ -56,9 +57,11 @@ def detect_face(frame):
 model_name = 'enet_b0_8_best_afew'
 fer = HSEmotionRecognizer(model_name=model_name, device=device)
 
-# Mở camera
 cap = cv2.VideoCapture(0)
+prev_tick = cv2.getTickCount()
+fps = 0
 
+start_time = time.time()
 while True:
     ret, frame_bgr = cap.read()
     if not ret:
@@ -82,10 +85,13 @@ while True:
 
                 # Dự đoán cảm xúc
                 emotion, scores = fer.predict_emotions(face_img)
+                elapsed_time = int(time.time() - start_time)  # Tính số giây từ đầu buổi học
                 emotion_responses.append({
-                        'emotion': emotion,
-                        'score': softmax(scores).tolist() 
-                    })
+                    'time_in_class': elapsed_time,  # Lưu giây thứ mấy của buổi học
+                    'emotion': emotion,
+                    'score': softmax(scores).tolist()
+                })
+
                 # Vẽ bounding box và nhãn cảm xúc
                 cv2.rectangle(frame_bgr, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(frame_bgr, emotion, (x1, y1 - 10),
@@ -94,6 +100,12 @@ while True:
                 print(f"Error processing face: {e}")
 
     # Hiển thị video
+    curr_tick = cv2.getTickCount()
+    time_diff = (curr_tick - prev_tick) / cv2.getTickFrequency()
+    fps = 1 / time_diff if time_diff > 0 else 0
+    prev_tick = curr_tick
+    cv2.putText(frame_bgr, f"FPS: {fps:.2f}", (5, 20), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     cv2.imshow('Real-time Emotion Recognition', frame_bgr)
 
     # Nhấn phím 'q' để thoát
@@ -104,7 +116,7 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
-
 draw_diagram(emotion_responses,"emotion.pdf")
-count, score = data_analyze(emotion_responses)
-expert_debate([count,score],"emotion.pdf")
+# count, score = data_analyze(emotion_responses)
+# expert_debate([count,score],"emotion.pdf")
+
