@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from facenet_pytorch import MTCNN
 import torch 
-
+import time
 def check_cuda():
     use_cuda = torch.cuda.is_available()
     device = 'cuda' if use_cuda else 'cpu'
@@ -26,7 +26,7 @@ def display_prediction(frame_bgr, x1, y1, x2, y2, emotion):
                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
     pass
 
-def facial_emotion_recognition(bounding_boxes, frame_rgb, frame_bgr, emotion_responses, fer):
+def facial_emotion_recognition(bounding_boxes, frame_rgb, frame_bgr, emotion_responses, fer,time):
     if type(bounding_boxes) != type(None):
         for bbox in bounding_boxes:
             try:
@@ -41,6 +41,7 @@ def facial_emotion_recognition(bounding_boxes, frame_rgb, frame_bgr, emotion_res
                 # print(face_img.shape)
                 emotion, scores = fer.predict_emotions(face_img)
                 emotion_responses.append({
+                        'time': time,
                         'emotion': emotion,
                         'score': scores 
                     })
@@ -64,13 +65,15 @@ def realtime_run(mtcnn, fer):
     prev_tick = cv2.getTickCount()
     fps = 0
 
+    start_time = time.time()
     while True:
         ret, frame_bgr = cap.read()
         if not ret:
             break
 
         frame_rgb, bounding_boxes = detect_face(frame_bgr, mtcnn)
-        emotion_responses = facial_emotion_recognition(bounding_boxes, frame_rgb, frame_bgr, emotion_responses, fer) 
+        elapsed_time = int(time.time() - start_time)
+        emotion_responses = facial_emotion_recognition(bounding_boxes, frame_rgb, frame_bgr, emotion_responses, fer,elapsed_time) 
         prev_tick, fps = display_fps(frame_bgr, prev_tick, fps)
         cv2.imshow('Real-time Emotion Recognition', frame_bgr)
         if cv2.waitKey(1) & 0xFF == ord('q'):

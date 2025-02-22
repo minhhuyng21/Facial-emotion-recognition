@@ -21,7 +21,6 @@ def setup_session_state(model_name):
         fer, mtcnn = setup(model_name=model_name)
         st.session_state['models'] = {'fer': fer, 'mtcnn': mtcnn}
 
-@st.fragment
 def stream_me():
     cap = cv2.VideoCapture(0)
     mtcnn = st.session_state['models']['mtcnn']
