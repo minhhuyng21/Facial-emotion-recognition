@@ -7,7 +7,7 @@ import pandas as pd
 import json
 from facenet_pytorch import MTCNN
 from hsemotion.facial_emotions import HSEmotionRecognizer
-from data_draw import draw_diagram
+from scr.data_draw import draw_diagram
 from autogen_agent import expert_debate
 import time
 

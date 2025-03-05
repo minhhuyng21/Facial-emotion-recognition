@@ -6,10 +6,20 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 from PyPDF2 import PdfReader, PdfWriter
 from matplotlib.backends.backend_pdf import PdfPages
-
+import pandas as pd
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI')
 config = {"config_list": [{"model": "gpt-4", "api_key": OPENAI_API_KEY}]}
+def data_analyze(emotion_responses):
+    df = pd.DataFrame([{'emotion': item['emotion']} for item in emotion_responses])
+    emotion_counts = df['emotion'].value_counts()
+
+    scores_df = pd.DataFrame([item['score'] for item in emotion_responses])
+    scores_df.columns = [f'Score_{i+1}' for i in range(8)]
+    scores_df['Emotion'] = [item['emotion'] for item in emotion_responses]
+
+    avg_scores = scores_df.groupby('Emotion')[scores_df.columns[:-1]].mean()
+    return emotion_counts, avg_scores
 def add_text_to_pdf(input_pdf, text):
     # Đọc file PDF gốc
     reader = PdfReader(input_pdf)
@@ -61,7 +71,7 @@ user_agent = ConversableAgent(
     system_message="You are a user interested in analyzing student emotion data.",
     llm_config=config,
 )
-def expert_debate(emotion_data, existing_pdf):
+def expert_debate(emotion_data):
     # Tạo group chat gồm các agent: chuyên gia phân tích dữ liệu, nhà tâm lý học và moderator
     groupchat = GroupChat(
         agents=[data_analyst_agent, psychologist_agent, moderator],
@@ -101,7 +111,6 @@ def expert_debate(emotion_data, existing_pdf):
     # In ra kết quả cuối cùng nếu có
 
 
-    add_text_to_pdf(existing_pdf, final_answer)
     return final_answer
 def main():
     with open("emotions.json", "r", encoding="utf-8") as f:
