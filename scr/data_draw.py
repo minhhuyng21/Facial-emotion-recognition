@@ -3,7 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
-
+from scr.test import split_text_to_pages,save_diagram2pdfone
+from PyPDF2 import PdfReader, PdfWriter
+import textwrap
+import os
 # Đọc file JSON
 def read_json_file(file_path):
     try:
@@ -17,19 +20,47 @@ def read_json_file(file_path):
         print("Error: Invalid JSON format")
         return None
     
+
 def save_diagram2pdf(line, pie, heat, time_series, output_pdf,analysis_text):
-    with PdfPages(output_pdf) as pdf:
-        # Thêm trang chứa văn bản phân tích
+    save_diagram2pdfone(output_pdf=output_pdf,analysis_text=analysis_text)
+    temp_pdf = "temp_output.pdf"
+
+    # Tạo file PDF mới với nội dung bổ sung
+    with PdfPages(temp_pdf) as pdf:
         fig, ax = plt.subplots(figsize=(8.5, 11))
         ax.axis('off')
-        ax.text(0.5, 0.5, analysis_text, fontsize=14, ha='center', va='center', wrap=True)
+        ax.text(0.5, 0.5, "Phân tích dữ liệu", fontsize=14, ha='center', va='center', wrap=True)
         pdf.savefig(fig)
         plt.close(fig)
+        
+        # Thêm các biểu đồ
         pdf.savefig(line)
         pdf.savefig(pie)
         pdf.savefig(heat)
         pdf.savefig(time_series)
-    print(f"Đã lưu các biểu đồ vào file {output_pdf}")
+
+    # Đọc file gốc và thêm nội dung mới
+    writer = PdfWriter()
+    reader = PdfReader(output_pdf)
+
+    # Sao chép nội dung từ file gốc
+    for page in reader.pages:
+        writer.add_page(page)
+
+    # Thêm nội dung mới từ file tạm
+    new_reader = PdfReader(temp_pdf)
+    for page in new_reader.pages:
+        writer.add_page(page)
+
+    # Lưu lại file PDF đã cập nhật
+    with open(output_pdf, "wb") as final_pdf:
+        writer.write(final_pdf)
+    
+    os.remove(temp_pdf)
+
+    print(f"Đã thêm biểu đồ vào file {output_pdf}")
+
+
 
 def draw_diagram(data):
     # Tạo DataFrame từ dữ liệu
@@ -96,17 +127,16 @@ def draw_diagram(data):
     plt.tight_layout()
     time_series = fig
 
-    return line, pie, heat, time_series
+    return (line, pie, heat, time_series)
 
 if __name__ == "__main__":
     # Đường dẫn đến file JSON của bạn
     file_path = 'emotions.json'  # Thay đổi thành đường dẫn file của bạn
-
     # Đọc dữ liệu
     data = read_json_file(file_path)
 
     # Chuỗi văn bản phân tích
     analysis_text = "Bản báo cáo Phân tích cảm xúc tổng hợp từ dữ liệu nhận diện cảm xúc, thể hiện sự phân bố và mức độ phổ biến của các cảm xúc khác nhau."
     if data:
-        line, pie, heat, time_series = draw_diagram(data)
-        save_diagram2pdf(line, pie, heat, time_series, 'emotion_analysis.pdf')
+        line, pie, heat = draw_diagram(data)
+        save_diagram2pdf(line, pie, heat)

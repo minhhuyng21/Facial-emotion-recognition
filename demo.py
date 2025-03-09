@@ -6,7 +6,9 @@ import cv2
 import time
 from scr.hse_onnx import build, detect_face, facial_emotion_recognition, display_fps    
 from scr.data_draw import draw_diagram, save_diagram2pdf
-# from scr.autogen_agent import expert_debate, data_analyze
+from scr.autogen_agent import data_analyze
+from scr.llm import agent
+
 @st.cache_resource
 def setup(model_name):
     fer, mtcnn = build(model_name)
@@ -89,11 +91,12 @@ def main():
             st.pyplot(st.session_state['chart']['pie'])
             st.pyplot(st.session_state['chart']['heat'])
             st.pyplot(st.session_state['chart']['time'])
-            # count, avg_scores = data_analyze(emotion_responses)
-            # text  = expert_debate([count, avg_scores], "emotion.pdf")
-            # st.write(text)
+            count, avg_scores = data_analyze(emotion_responses)
+            text = agent([count, avg_scores])
+            text = text.content
+            st.write(text)
             if st.button('Export to PDF'):
-                # save_diagram2pdf(line, pie, heat, time_chart, 'emotions.pdf')
+                save_diagram2pdf(line, pie, heat, time_chart, 'emotions.pdf',text)
                 st.write('Save successfully')
 
     pass
